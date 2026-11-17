@@ -4,14 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>ETN 1024 - Realidad Aumentada</title>
-  <!-- Carga rápida de A-Frame y AR.js desde servidores alternativos -->
-  <script src="https://unpkg.com"></script>
-  <script src="https://unpkg.com"></script>
+  <!-- Versiones estables compatibles con navegadores móviles -->
+  <script src="https://aframe.io"></script>
+  <script src="https://githack.com"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       font-family: Arial, sans-serif;
+    }
+    /* Asegura que el video de la cámara siempre sea visible detrás del canvas 3D */
+    video {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      z-index: -2 !important;
+    }
+    canvas.a-canvas {
+      z-index: 1 !important;
     }
     #header-ui {
       position: fixed;
@@ -22,25 +38,47 @@
       color: #ffffff;
       padding: 10px 14px;
       border-radius: 8px;
-      z-index: 999;
+      z-index: 1000;
       pointer-events: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
     }
+    #start-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    #btn-start {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
     #controls-ui {
       position: fixed;
       bottom: 20px;
-      left: 10px;
-      right: 10px;
+      left: 0;
+      right: 0;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      z-index: 999;
+      justify-content: center;
+      z-index: 1000;
     }
-    .btn-action {
+    #btn-size {
       background-color: #0056b3;
       color: white;
       border: none;
@@ -51,12 +89,16 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
       cursor: pointer;
     }
-    #btn-start {
-      background-color: #2e7d32;
-    }
   </style>
 </head>
 <body>
+
+  <!-- Pantalla de inicio para forzar el permiso y reproducción de video -->
+  <div id="start-overlay">
+    <p>Toca el botón para iniciar la cámara trasera</p>
+    <button id="btn-start">Encender Cámara</button>
+    <p id="error-log" style="color: #ff8a80; font-size: 12px; margin-top: 15px;"></p>
+  </div>
 
   <div id="header-ui">
     <div><strong>Estudiante:</strong> Caleb Ignacio Cabas Olivares</div>
@@ -64,8 +106,7 @@
   </div>
 
   <div id="controls-ui">
-    <button id="btn-start" class="btn-action" style="display: none;">Activar Cámara</button>
-    <button id="btn-size" class="btn-action">Cambiar tamaño</button>
+    <button id="btn-size">Cambiar tamaño</button>
   </div>
 
   <a-scene embedded 
@@ -86,13 +127,36 @@
   </a-scene>
 
   <script>
-    const btnSize = document.getElementById('btn-size');
     const btnStart = document.getElementById('btn-start');
+    const startOverlay = document.getElementById('start-overlay');
+    const errorLog = document.getElementById('error-log');
+    const btnSize = document.getElementById('btn-size');
     const statusText = document.getElementById('status-text');
     const cubo = document.getElementById('cubo-azul');
     const esfera = document.getElementById('esfera-roja');
 
     let isEnlarged = false;
+
+    btnStart.addEventListener('click', async () => {
+      try {
+        // Verifica acceso real a la cámara trasera tras el toque del usuario
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        stream.getTracks().forEach(track => track.stop());
+
+        // Busca el elemento de video creado por AR.js y fuerza su reproducción
+        const arVideo = document.querySelector('video');
+        if (arVideo) {
+          arVideo.setAttribute('playsinline', '');
+          arVideo.setAttribute('muted', '');
+          await arVideo.play();
+        }
+        startOverlay.style.display = 'none';
+      } catch (err) {
+        errorLog.textContent = 'Error: ' + err.name + ' - ' + err.message;
+      }
+    });
 
     btnSize.addEventListener('click', () => {
       isEnlarged = !isEnlarged;
@@ -101,22 +165,7 @@
       esfera.setAttribute('scale', newScale);
       statusText.textContent = isEnlarged ? 'Ampliado' : 'Normal';
     });
-
-    // Botón manual si el navegador móvil pausa el video
-    setTimeout(() => {
-      const video = document.querySelector('video');
-      if (video && video.paused) {
-        btnStart.style.display = 'block';
-      }
-    }, 3000);
-
-    btnStart.addEventListener('click', () => {
-      const video = document.querySelector('video');
-      if (video) {
-        video.play();
-        btnStart.style.display = 'none';
-      }
-    });
   </script>
 </body>
 </html>
+
