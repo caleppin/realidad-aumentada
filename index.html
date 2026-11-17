@@ -1,12 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>ETN 1024 - Realidad Aumentada</title>
-  <!-- Combinación estable A-Frame 1.4.2 + AR.js 3.4.5 -->
   <script src="https://aframe.io"></script>
-  <script src="https://githack.com"></script>
+  <script src="https://jsdelivr.net"></script>
   <style>
     body {
       margin: 0;
@@ -32,8 +32,8 @@
     #controls-ui {
       position: fixed;
       bottom: 20px;
-      left: 0;
-      right: 0;
+      left: 10px;
+      right: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -51,11 +51,12 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
     #debug-msg {
-      background: rgba(200, 0, 0, 0.85);
+      background: rgba(180, 0, 0, 0.9);
       color: white;
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-radius: 6px;
       font-size: 12px;
+      text-align: center;
       display: none;
     }
   </style>
@@ -106,19 +107,20 @@
       statusText.textContent = isEnlarged ? 'Ampliado' : 'Normal';
     });
 
-    // Diagnóstico directo de cámara en pantalla
-    window.addEventListener('arjs-video-loaded', () => {
-      debugMsg.style.display = 'none';
-    });
-
-    setTimeout(() => {
+    // Prueba directa del sensor y diagnóstico exacto
+    setTimeout(async () => {
       const video = document.querySelector('video');
       if (!video || video.readyState === 0) {
         debugMsg.style.display = 'block';
-        debugMsg.textContent = 'Cámara inactiva: revisa permisos del navegador o abre en Chrome/Safari.';
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(t => t.stop());
+          debugMsg.textContent = 'Error de carga: AR.js no descargó bien. Revisa tu conexión a internet y recarga.';
+        } catch (err) {
+          debugMsg.textContent = 'Bloqueo del teléfono (' + err.name + '): ' + err.message;
+        }
       }
-    }, 4000);
+    }, 4500);
   </script>
 </body>
 </html>
-
