@@ -4,30 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>ETN 1024 - Realidad Aumentada</title>
-  <!-- Versiones estables compatibles con navegadores móviles -->
   <script src="https://aframe.io"></script>
-  <script src="https://githack.com"></script>
+  <script src="https://jsdelivr.net"></script>
   <style>
+    /* Fondo transparente obligatorio para que no tape la cámara */
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+      background: transparent !important;
       font-family: Arial, sans-serif;
     }
-    /* Asegura que el video de la cámara siempre sea visible detrás del canvas 3D */
+    /* Orden de capas: Video (1) -> Figuras 3D (2) -> Botones (100) */
     video {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: 100vw !important;
+      height: 100vh !important;
       object-fit: cover !important;
-      z-index: -2 !important;
+      z-index: 1 !important;
     }
     canvas.a-canvas {
-      z-index: 1 !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      z-index: 2 !important;
     }
     #header-ui {
       position: fixed;
@@ -38,7 +42,7 @@
       color: #ffffff;
       padding: 10px 14px;
       border-radius: 8px;
-      z-index: 1000;
+      z-index: 100;
       pointer-events: none;
       display: flex;
       justify-content: space-between;
@@ -48,12 +52,12 @@
     #start-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: #121212;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 2000;
+      z-index: 200;
       color: white;
       text-align: center;
       padding: 20px;
@@ -76,7 +80,7 @@
       right: 0;
       display: flex;
       justify-content: center;
-      z-index: 1000;
+      z-index: 100;
     }
     #btn-size {
       background-color: #0056b3;
@@ -93,72 +97,68 @@
 </head>
 <body>
 
-  <!-- Pantalla de inicio para forzar el permiso y reproducción de video -->
+  <!-- Pantalla inicial -->
   <div id="start-overlay">
-    <p>Toca el botón para iniciar la cámara trasera</p>
+    <p>Presiona el botón y acepta el permiso de cámara</p>
     <button id="btn-start">Encender Cámara</button>
-    <p id="error-log" style="color: #ff8a80; font-size: 12px; margin-top: 15px;"></p>
+    <p id="error-log" style="color: #ff8a80; font-size: 13px; margin-top: 15px;"></p>
   </div>
 
+  <!-- Barra superior -->
   <div id="header-ui">
     <div><strong>Estudiante:</strong> Caleb Ignacio Cabas Olivares</div>
     <div><strong>Tamaño:</strong> <span id="status-text">Normal</span></div>
   </div>
 
+  <!-- Botón de escala -->
   <div id="controls-ui">
     <button id="btn-size">Cambiar tamaño</button>
   </div>
 
-  <a-scene embedded 
-           vr-mode-ui="enabled: false"
-           arjs="sourceType: webcam; debugUIEnabled: false;">
-    
-    <!-- Tarjeta A: Hiro -> Cubo Azul -->
-    <a-marker preset="hiro">
-      <a-box id="cubo-azul" position="0 0.5 0" scale="1 1 1" color="#1E88E5"></a-box>
-    </a-marker>
-
-    <!-- Tarjeta B: Kanji -> Esfera Roja -->
-    <a-marker preset="kanji">
-      <a-sphere id="esfera-roja" position="0 0.6 0" radius="0.5" scale="1 1 1" color="#E53935"></a-sphere>
-    </a-marker>
-
-    
-  </a-scene>
+  <!-- Contenedor donde se inyectará la cámara AR solo después del permiso -->
+  <div id="ar-container"></div>
 
   <script>
     const btnStart = document.getElementById('btn-start');
     const startOverlay = document.getElementById('start-overlay');
     const errorLog = document.getElementById('error-log');
+    const arContainer = document.getElementById('ar-container');
     const btnSize = document.getElementById('btn-size');
     const statusText = document.getElementById('status-text');
-    const cubo = document.getElementById('cubo-azul');
-    const esfera = document.getElementById('esfera-roja');
 
     let isEnlarged = false;
 
     btnStart.addEventListener('click', async () => {
       try {
-        // Verifica acceso real a la cámara trasera tras el toque del usuario
+        // 1. Pedir permiso primero y liberar el sensor
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment' } 
         });
         stream.getTracks().forEach(track => track.stop());
 
-        // Busca el elemento de video creado por AR.js y fuerza su reproducción
-        const arVideo = document.querySelector('video');
-        if (arVideo) {
-          arVideo.setAttribute('playsinline', '');
-          arVideo.setAttribute('muted', '');
-          await arVideo.play();
-        }
+        // 2. Ocultar pantalla negra e iniciar AR.js con permiso ya concedido
         startOverlay.style.display = 'none';
+        arContainer.innerHTML = `
+          <a-scene embedded vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
+            <a-marker preset="hiro">
+              <a-box id="cubo-azul" position="0 0.5 0" scale="1 1 1" color="#1E88E5"></a-box>
+            </a-marker>
+            <a-marker preset="kanji">
+              <a-sphere id="esfera-roja" position="0 0.6 0" radius="0.5" scale="1 1 1" color="#E53935"></a-sphere>
+            </a-marker>
+            
+          </a-scene>
+        `;
       } catch (err) {
-        errorLog.textContent = 'Error: ' + err.name + ' - ' + err.message;
+        errorLog.textContent = 'No se pudo abrir la cámara: ' + err.message;
       }
     });
 
     btnSize.addEventListener('click', () => {
+      const cubo = document.getElementById('cubo-azul');
+      const esfera = document.getElementById('esfera-roja');
+      if (!cubo || !esfera) return;
+
       isEnlarged = !isEnlarged;
       const newScale = isEnlarged ? '1.5 1.5 1.5' : '1 1 1';
       cubo.setAttribute('scale', newScale);
@@ -168,4 +168,3 @@
   </script>
 </body>
 </html>
-
