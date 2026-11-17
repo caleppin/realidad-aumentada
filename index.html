@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ETN 1024 - Realidad Aumentada</title>
+  <!-- Bibliotecas A-Frame y AR.js -->
+  <script src="https://aframe.io"></script>
+  <script src="https://githack.com"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    /* Encabezado superior con datos del estudiante y estado */
+    #header-ui {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    /* Contenedor inferior para el botón */
+    #controls-ui {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 10;
+    }
+    #btn-size {
+      background-color: #0056b3;
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 25px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    #btn-size:active {
+      background-color: #003d80;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Interfaz superior: Nombre y estado del tamaño -->
+  <div id="header-ui">
+    <div><strong>Estudiante:</strong> Caleb Ignacio Cabas Olivares</div>
+    <div><strong>Tamaño:</strong> <span id="status-text">Normal</span></div>
+  </div>
+
+  <!-- Interfaz inferior: Botón de escala -->
+  <div id="controls-ui">
+    <button id="btn-size">Cambiar tamaño</button>
+  </div>
+
+  <!-- Escena de Realidad Aumentada -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    
+    <!-- Tarjeta A: Marcador Hiro -> Cubo Azul -->
+    <a-marker preset="hiro">
+      <a-box id="cubo-azul" 
+             position="0 0.5 0" 
+             scale="1 1 1" 
+             color="#1E88E5">
+      </a-box>
+    </a-marker>
+
+    <!-- Tarjeta B: Marcador Kanji -> Esfera Roja -->
+    <a-marker preset="kanji">
+      <a-sphere id="esfera-roja" 
+                position="0 0.6 0" 
+                radius="0.5" 
+                scale="1 1 1" 
+                color="#E53935">
+      </a-sphere>
+    </a-marker>
+
+    <!-- Cámara vinculada a la escena -->
+    
+  </a-scene>
+
+  <!-- Lógica de control de escala -->
+  <script>
+    const btnSize = document.getElementById('btn-size');
+    const statusText = document.getElementById('status-text');
+    const cubo = document.getElementById('cubo-azul');
+    const esfera = document.getElementById('esfera-roja');
+
+    let isEnlarged = false;
+
+    btnSize.addEventListener('click', () => {
+      isEnlarged = !isEnlarged;
+      const newScale = isEnlarged ? '1.5 1.5 1.5' : '1 1 1';
+      
+      // Actualizar escala en ambas figuras (estado compartido)
+      cubo.setAttribute('scale', newScale);
+      esfera.setAttribute('scale', newScale);
+      
+      // Actualizar texto en pantalla
+      statusText.textContent = isEnlarged ? 'Ampliado' : 'Normal';
+    });
+  </script>
+</body>
+</html>
