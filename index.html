@@ -1,136 +1,110 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>ETN 1024 - Realidad Aumentada</title>
-  <script src="https://aframe.io"></script>
-  <script src="https://jsdelivr.net"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Tarjetas geométricas AR - ETN 1024</title>
+
+  <!-- Versiones fijas de las bibliotecas (anotarlas en el informe) -->
+  <!-- A-Frame 1.3.0 -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <!-- AR.js 3.4.5 (A-Frame, seguimiento de marcadores) -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
   <style>
-    /* Evita que el fondo blanco tape el video de la cámara */
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: transparent !important;
-      font-family: Arial, sans-serif;
+    body { margin: 0; overflow: hidden; }
+
+    /* Franja superior: nombre del estudiante */
+    #nombre {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff; font: 600 15px/1.2 sans-serif;
+      text-align: center;
+      z-index: 10000; pointer-events: none;
     }
 
-    /* Fuerza el video de la cámara al frente del fondo y detrás del 3D */
-    video {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      z-index: 1 !important;
+    /* Franja inferior: botón + estado (lejos del centro de seguimiento) */
+    #controles {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      display: flex; gap: 12px; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 10000;
     }
-
-    /* Lienzo 3D transparente sobre el video */
-    canvas.a-canvas {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      z-index: 2 !important;
+    #btnTamano {
+      font: 600 16px sans-serif;
+      padding: 12px 20px; border: 0; border-radius: 10px;
+      background: #fff; color: #000;
     }
-
-    /* Interfaz superior */
-    #header-ui {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.75);
-      color: #ffffff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      z-index: 100;
-      pointer-events: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-    }
-
-    /* Botón inferior */
-    #controls-ui {
-      position: fixed;
-      bottom: 20px;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    #btn-size {
-      background-color: #0056b3;
-      color: white;
-      border: none;
-      padding: 14px 26px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 25px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      cursor: pointer;
+    #estado {
+      color: #fff; font: 600 16px sans-serif; min-width: 90px;
     }
   </style>
 </head>
+
 <body>
+  <!-- CAMBIA ESTE TEXTO por tu nombre -->
+  <div id="nombre">Estudiante: TU NOMBRE AQUÍ — ETN 1024</div>
 
-  <div id="header-ui">
-    <div><strong>Estudiante:</strong> Caleb Ignacio Cabas Olivares</div>
-    <div><strong>Tamaño:</strong> <span id="status-text">Normal</span></div>
+  <div id="controles">
+    <button id="btnTamano" type="button">Cambiar tamaño</button>
+    <span id="estado">Normal</span>
   </div>
 
-  <div id="controls-ui">
-    <button id="btn-size">Cambiar tamaño</button>
-  </div>
+  <!-- Escena: cámara trasera (webcam) + AR.js -->
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; trackingMethod: best;">
 
-  <!-- Escena de Realidad Aumentada -->
-  <a-scene embedded 
-           vr-mode-ui="enabled: false"
-           arjs="sourceType: webcam; debugUIEnabled: false;">
-    
-    <!-- Tarjeta A: Hiro -> Cubo Azul -->
+    <!-- TARJETA A: marcador Hiro -> CUBO AZUL -->
     <a-marker preset="hiro">
-      <a-box id="cubo-azul" position="0 0.5 0" scale="1 1 1" color="#1E88E5"></a-box>
+      <a-box id="figura-cubo"
+             position="0 0.5 0"
+             scale="1 1 1"
+             color="#0000FF"></a-box>
     </a-marker>
 
-    <!-- Tarjeta B: Kanji -> Esfera Roja -->
+    <!-- TARJETA B: marcador Kanji -> ESFERA ROJA -->
     <a-marker preset="kanji">
-      <a-sphere id="esfera-roja" position="0 0.6 0" radius="0.5" scale="1 1 1" color="#E53935"></a-sphere>
+      <a-sphere id="figura-esfera"
+                position="0 0.5 0"
+                radius="0.5"
+                scale="1 1 1"
+                color="#FF0000"></a-sphere>
     </a-marker>
 
-    
+    <!-- Cámara: sin ella las figuras no se ven. NO está asociada a las figuras -->
+    <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    const btnSize = document.getElementById('btn-size');
-    const statusText = document.getElementById('status-text');
-    const cubo = document.getElementById('cubo-azul');
-    const esfera = document.getElementById('esfera-roja');
+    // Estado de tamaño común para ambas figuras
+    const ESCALA_NORMAL = 1.0;
+    const ESCALA_AMPLIADA = 1.5;   // +50 %
+    let ampliado = false;
 
-    let isEnlarged = false;
+    const cubo = document.getElementById('figura-cubo');
+    const esfera = document.getElementById('figura-esfera');
+    const etiqueta = document.getElementById('estado');
+    const boton = document.getElementById('btnTamano');
 
-    btnSize.addEventListener('click', () => {
-      isEnlarged = !isEnlarged;
-      const newScale = isEnlarged ? '1.5 1.5 1.5' : '1 1 1';
-      cubo.setAttribute('scale', newScale);
-      esfera.setAttribute('scale', newScale);
-      statusText.textContent = isEnlarged ? 'Ampliado' : 'Normal';
+    function aplicarTamano() {
+      const s = ampliado ? ESCALA_AMPLIADA : ESCALA_NORMAL;
+      const valor = s + ' ' + s + ' ' + s;
+      cubo.setAttribute('scale', valor);
+      esfera.setAttribute('scale', valor);
+      etiqueta.textContent = ampliado ? 'Ampliado' : 'Normal';
+    }
+
+    boton.addEventListener('click', function () {
+      ampliado = !ampliado;
+      aplicarTamano();
     });
 
-    // Asegura reproducción de video en dispositivos Android/Huawei
-    window.addEventListener('arjs-video-loaded', () => {
-      const video = document.querySelector('video');
-      if (video && video.paused) {
-        video.play();
-      }
-    });
+    aplicarTamano(); // estado inicial: Normal
   </script>
 </body>
 </html>
