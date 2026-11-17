@@ -4,33 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>ETN 1024 - Realidad Aumentada</title>
-  <!-- Bibliotecas desde servidor rápido jsDelivr -->
+  <!-- Combinación estable A-Frame 1.4.2 + AR.js 3.4.5 -->
   <script src="https://aframe.io"></script>
-  <script src="https://jsdelivr.net"></script>
+  <script src="https://githack.com"></script>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
       overflow: hidden;
       font-family: Arial, sans-serif;
     }
     #header-ui {
       position: fixed;
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      background: rgba(0, 0, 0, 0.7);
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.75);
       color: #ffffff;
       padding: 10px 14px;
       border-radius: 8px;
-      z-index: 10;
+      z-index: 999;
       pointer-events: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 14px;
+      font-size: 13px;
     }
     #controls-ui {
       position: fixed;
@@ -38,19 +35,28 @@
       left: 0;
       right: 0;
       display: flex;
-      justify-content: center;
-      z-index: 10;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 999;
     }
     #btn-size {
       background-color: #0056b3;
       color: white;
       border: none;
-      padding: 14px 24px;
+      padding: 14px 26px;
       font-size: 16px;
       font-weight: bold;
       border-radius: 25px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    #debug-msg {
+      background: rgba(200, 0, 0, 0.85);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
     }
   </style>
 </head>
@@ -62,14 +68,13 @@
   </div>
 
   <div id="controls-ui">
+    <div id="debug-msg"></div>
     <button id="btn-size">Cambiar tamaño</button>
   </div>
 
-  <!-- Escena configurada específicamente para cámara trasera móvil -->
   <a-scene embedded 
            vr-mode-ui="enabled: false"
-           renderer="logarithmicDepthBuffer: true; precision: medium;"
-           arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false;">
+           arjs="sourceType: webcam; debugUIEnabled: false;">
     
     <!-- Tarjeta A: Hiro -> Cubo Azul -->
     <a-marker preset="hiro">
@@ -87,6 +92,7 @@
   <script>
     const btnSize = document.getElementById('btn-size');
     const statusText = document.getElementById('status-text');
+    const debugMsg = document.getElementById('debug-msg');
     const cubo = document.getElementById('cubo-azul');
     const esfera = document.getElementById('esfera-roja');
 
@@ -100,10 +106,19 @@
       statusText.textContent = isEnlarged ? 'Ampliado' : 'Normal';
     });
 
-    // Verificar si el navegador soporta o bloquea la cámara
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Tu navegador bloqueó la cámara. Abre este enlace directamente en Google Chrome o Safari.');
-    }
+    // Diagnóstico directo de cámara en pantalla
+    window.addEventListener('arjs-video-loaded', () => {
+      debugMsg.style.display = 'none';
+    });
+
+    setTimeout(() => {
+      const video = document.querySelector('video');
+      if (!video || video.readyState === 0) {
+        debugMsg.style.display = 'block';
+        debugMsg.textContent = 'Cámara inactiva: revisa permisos del navegador o abre en Chrome/Safari.';
+      }
+    }, 4000);
   </script>
 </body>
 </html>
+
